@@ -1,6 +1,8 @@
 import pygame
 import random
 from music import Music
+from figures import *
+from Field import *
 
 def main():
     width = 1080 # Ширина игрового экрана.
@@ -22,7 +24,8 @@ def main():
     imagesFolder = 'Images'
     images = [imagesFolder + '\Field.png']
 
-    field = pygame.image.load(images[0])
+    field = Field(imagesFolder + '\Field.png')
+    field.addPiece(0, 3, Queen(imagesFolder + '\Chessmen\Black\Queen.png', "black"))
 
     Music.playNextMusic()
 
@@ -31,7 +34,8 @@ def main():
         clock.tick(FPS)
 
         screen.fill((0, 0, 255))
-        screen.blit(field, (50, -100))
+        screen.blit(field.getImage(), (100, 0))
+        screen.blit(field.getPiece(0, 3).getImage(), field.getPiece(0, 3).getRect())
 
         for event in pygame.event.get():
 
