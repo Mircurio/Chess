@@ -41,9 +41,21 @@ def main():
         for event in pygame.event.get():
 
             # Проверка закрытия окна.
-            if event.type == pygame.QUIT:
+            if event.type == pygame.MOUSEBUTTONUP:
+
+                try:
+                    mouceCoordinates = pygame.mouse.get_pos()
+                    if pygame.mouse.get_pos() is not None:
+                        cell = field.findCell(mouceCoordinates)
+
+                except CannotFindThisCell:
+                    pass
+
+
+            elif event.type == pygame.QUIT:
                 exit = True
 
+            # Если музыка закончилась, то включаем следующую.
             elif event.type == MUSIC_END:
                 Music.playNextMusic()
 

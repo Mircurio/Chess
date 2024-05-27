@@ -6,6 +6,11 @@ class CellDontContainsPiece(Exception):
     def __init__(self, message = "Cell don't contains piece"):
         super().__init__(message)
 
+class CannotFindThisCell(Exception):
+
+    def __init__(self, message = "Can't find this cell!"):
+        super().__init__(message)
+
 class Cell:
 
     def __init__(self, x1, y1, x2, y2):
@@ -14,6 +19,7 @@ class Cell:
         self.__x2 = x2
         self.__y2 = y2
         self.__piece = None
+        self.__isSelected = False
 
     def getPiece(self):
         if self.__piece != None:
@@ -31,6 +37,15 @@ class Cell:
 
     def delPiece(self):
         self.__piece = None
+
+    def getCoordinates(self):
+        return (self.__x1, self.__y1, self.__x2, self.__y2)
+
+    def select(self):
+        if self.__isSelected:
+            self.__isSelected = False
+        else:
+            self.__isSelected = True
 
 class Field:
 
@@ -74,9 +89,21 @@ class Field:
         self.addPiece(0, 6, Knight(imagesFolder + '\Chessmen\Black\Knight.png', "black"))
         self.addPiece(0, 4, King(imagesFolder + '\Chessmen\Black\King.png', "black"))
 
-        #Добавляем 8 чёрных пешек!
+        #Добавляем 8 чёрных и белых пешек!
         for i in range(8):
             self.addPiece(1, i, Pawn(imagesFolder + '\Chessmen\Black\Pawn.png', "black"))
+            self.addPiece(6, i, Pawn(imagesFolder + '\Chessmen\White\Pawn.png', "white"))
+
+
+        # Расставляем белые фигуры!
+        self.addPiece(7, 3, Queen(imagesFolder + '\Chessmen\White\Queen.png', "white"))
+        self.addPiece(7, 0, Rook(imagesFolder + '\Chessmen\White\Rook.png', "white"))
+        self.addPiece(7, 7, Rook(imagesFolder + '\Chessmen\White\Rook.png', "white"))
+        self.addPiece(7, 2, Bishop(imagesFolder + '\Chessmen\White\Bishop.png', "white"))
+        self.addPiece(7, 5, Bishop(imagesFolder + '\Chessmen\White\Bishop.png', "white"))
+        self.addPiece(7, 1, Knight(imagesFolder + '\Chessmen\White\Knight.png', "white"))
+        self.addPiece(7, 6, Knight(imagesFolder + '\Chessmen\White\Knight.png', "white"))
+        self.addPiece(7, 4, King(imagesFolder + '\Chessmen\White\King.png', "white"))
 
 
 
@@ -88,6 +115,21 @@ class Field:
 
     def getPiece(self, cellRowIndex, cellColumnIndex):
         return  self.__cells[cellRowIndex][cellColumnIndex].getPiece()
+
+    def findCell(self, coordinates):
+        '''Возвращяет клетку и её индекс, внутри которой находятся данные координаты. В противном случае - выбрасывает исключение.'''
+
+        x, y = coordinates
+
+        fieldSize = 8
+        for rowNumber in range(fieldSize):
+            for columnNumber in range(fieldSize):
+
+                x1, y1, x2, y2 = self.__cells[rowNumber][columnNumber].getCoordinates()
+                if x >= x1 and x <= x2 and y >= y1 and y <= y2:
+                    return self.__cells[rowNumber][columnNumber], rowNumber, columnNumber
+
+        raise CannotFindThisCell()
 
     def blitAllPieces(self, screen):
         '''Выводит все шахматные фигуры на экран.'''
