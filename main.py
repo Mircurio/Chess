@@ -25,7 +25,7 @@ def main():
     images = [imagesFolder + '\Field.png']
 
     field = Field(imagesFolder + '\Field.png')
-    field.addPiece(0, 3, Queen(imagesFolder + '\Chessmen\Black\Queen.png', "black"))
+
 
     Music.playNextMusic()
 
@@ -35,7 +35,8 @@ def main():
 
         screen.fill((0, 0, 255))
         screen.blit(field.getImage(), (100, 0))
-        screen.blit(field.getPiece(0, 3).getImage(), field.getPiece(0, 3).getRect())
+
+        field.blitAllPieces(screen)
 
         for event in pygame.event.get():
 

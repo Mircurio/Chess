@@ -52,5 +52,10 @@ class Knight(ChessPiece):
 
 class Pawn(ChessPiece):
 
-    def __init__(self, filaname, team, x = None, y = None):
-        super().__init__(filaname, team, x, y)
+    def __init__(self, filename, team, x = None, y = None):
+        super().__init__(filename, team, x, y)
+
+class King(ChessPiece):
+
+    def __init__(self, filename, team, x = None, y = None):
+        super().__init__(filename, team, x, y)

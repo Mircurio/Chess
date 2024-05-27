@@ -47,21 +47,38 @@ class Field:
         self.__image = pygame.image.load(filename).convert_alpha()
 
         # Координаты левой верхней клетки.
-        firstCellX1 = 83
-        firstCellY1 = 83
-        firstCellx2 = 168
-        firstCellY2 = 166
+        firstCellX1 = 180
+        firstCellY1 = 88
+        firstCellx2 = 266
+        firstCellY2 = 171
 
         deltaX = firstCellx2 - firstCellX1
         deltaY = firstCellY2 - firstCellY1
-        deltaScreen = -26
         for rowNumber in range(fieldSize):
 
 
             for columnNumber in range(fieldSize):
                 self.__cells[rowNumber].append(
-                     Cell(firstCellX1 + deltaX * columnNumber + deltaScreen, firstCellY1 + firstCellY1 * rowNumber,
-                           firstCellx2 + firstCellx2 * columnNumber + deltaScreen, firstCellY2 + firstCellY2 * rowNumber))
+                     Cell(firstCellX1 + deltaX * columnNumber, firstCellY1 + deltaY * rowNumber,
+                           firstCellx2 + deltaX * columnNumber, firstCellY2 + deltaY * rowNumber))
+
+        imagesFolder = "Images"
+
+        #Расставляем черные фигуры!
+        self.addPiece(0, 3, Queen(imagesFolder + '\Chessmen\Black\Queen.png', "black"))
+        self.addPiece(0, 0, Rook(imagesFolder + '\Chessmen\Black\Rook.png', "black"))
+        self.addPiece(0, 7, Rook(imagesFolder + '\Chessmen\Black\Rook.png', "black"))
+        self.addPiece(0, 2, Bishop(imagesFolder + '\Chessmen\Black\Bishop.png', "black"))
+        self.addPiece(0, 5, Bishop(imagesFolder + '\Chessmen\Black\Bishop.png', "black"))
+        self.addPiece(0, 1, Knight(imagesFolder + '\Chessmen\Black\Knight.png', "black"))
+        self.addPiece(0, 6, Knight(imagesFolder + '\Chessmen\Black\Knight.png', "black"))
+        self.addPiece(0, 4, King(imagesFolder + '\Chessmen\Black\King.png', "black"))
+
+        #Добавляем 8 чёрных пешек!
+        for i in range(8):
+            self.addPiece(1, i, Pawn(imagesFolder + '\Chessmen\Black\Pawn.png', "black"))
+
+
 
     def getImage(self):
         return self.__image
@@ -71,3 +88,15 @@ class Field:
 
     def getPiece(self, cellRowIndex, cellColumnIndex):
         return  self.__cells[cellRowIndex][cellColumnIndex].getPiece()
+
+    def blitAllPieces(self, screen):
+        '''Выводит все шахматные фигуры на экран.'''
+
+        for row in self.__cells:
+            for cell in row:
+
+                #Если клетка не содержит фигуру, то просто пропускаем её.
+                try:
+                    screen.blit(cell.getPiece().getImage(), cell.getPiece().getRect())
+                except:
+                    pass
