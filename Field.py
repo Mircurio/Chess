@@ -13,13 +13,15 @@ class CannotFindThisCell(Exception):
 
 class Cell:
 
-    def __init__(self, x1, y1, x2, y2):
+    def __init__(self, x1, y1, x2, y2, row, column):
         self.__x1 = x1
         self.__y1 = y1
         self.__x2 = x2
         self.__y2 = y2
         self.__piece = None
         self.__isSelected = False
+        self.__row = row
+        self.__column = column
 
     def getPiece(self):
         if self.__piece != None:
@@ -30,7 +32,7 @@ class Cell:
     def __getCenter(self):
         return (self.__x2 + self.__x1) / 2, (self.__y2 + self.__y1) / 2
 
-    def setPiece(self, piece: ChessPiece):
+    def setPiece(self, piece : ChessPiece):
         self.__piece = piece
         center = self.__getCenter()
         piece.setСoordinates(center[0], center[1])
@@ -46,6 +48,18 @@ class Cell:
             self.__isSelected = False
         else:
             self.__isSelected = True
+
+    def isEmpty(self):
+        if self.__piece == None:
+            return True
+        else:
+            return False
+
+    def getRow(self):
+        return self.__row
+
+    def getColumn(self):
+        return self.__column
 
 class Field:
 
@@ -75,7 +89,7 @@ class Field:
             for columnNumber in range(fieldSize):
                 self.__cells[rowNumber].append(
                      Cell(firstCellX1 + deltaX * columnNumber, firstCellY1 + deltaY * rowNumber,
-                           firstCellx2 + deltaX * columnNumber, firstCellY2 + deltaY * rowNumber))
+                           firstCellx2 + deltaX * columnNumber, firstCellY2 + deltaY * rowNumber, rowNumber, columnNumber))
 
         imagesFolder = "Images"
 
@@ -106,6 +120,13 @@ class Field:
         self.addPiece(7, 4, King(imagesFolder + '\Chessmen\White\King.png', "white"))
 
 
+    def getCell(self, row, column):
+        fieldSize = 8
+
+        if row >= fieldSize or row < 0 or column >= fieldSize or column < 0:
+            raise IndexError
+
+        return self.__cells[row][column]
 
     def getImage(self):
         return self.__image
@@ -116,8 +137,23 @@ class Field:
     def getPiece(self, cellRowIndex, cellColumnIndex):
         return  self.__cells[cellRowIndex][cellColumnIndex].getPiece()
 
+    def moveFigure(self, moveFrom, moveTo):
+        '''Двигает фигуры на доске, если это правомерно. Возвращает в слечае успеха True, иначе - False.'''
+
+        # Индексы ячеек.
+        row1, column1 = moveFrom
+        row2, column2 = moveTo
+
+        if self.getPiece(row1, column1).canMove(self, self.getCell(row1, column1), self.getCell(row2, column2)):
+            self.getCell(row2, column2).setPiece(self.getPiece(row1, column1))
+            self.getCell(row1, column1).delPiece()
+            return True
+
+        return False
+
+
     def findCell(self, coordinates):
-        '''Возвращяет клетку и её индекс, внутри которой находятся данные координаты. В противном случае - выбрасывает исключение.'''
+        '''Возвращяет клетку, внутри которой находятся данные координаты. В противном случае - выбрасывает исключение.'''
 
         x, y = coordinates
 
@@ -127,7 +163,7 @@ class Field:
 
                 x1, y1, x2, y2 = self.__cells[rowNumber][columnNumber].getCoordinates()
                 if x >= x1 and x <= x2 and y >= y1 and y <= y2:
-                    return self.__cells[rowNumber][columnNumber], rowNumber, columnNumber
+                    return self.__cells[rowNumber][columnNumber]
 
         raise CannotFindThisCell()
 
@@ -140,5 +176,5 @@ class Field:
                 #Если клетка не содержит фигуру, то просто пропускаем её.
                 try:
                     screen.blit(cell.getPiece().getImage(), cell.getPiece().getRect())
-                except:
+                except CellDontContainsPiece:
                     pass

@@ -5,6 +5,7 @@ from figures import *
 from Field import *
 
 def main():
+
     width = 1080 # Ширина игрового экрана.
     height = 800 # Высота игрового экрана.
     FPS = 30     # Частота кадров в секунду.
@@ -24,10 +25,17 @@ def main():
     imagesFolder = 'Images'
     images = [imagesFolder + '\Field.png']
 
-    field = Field(imagesFolder + '\Field.png')
-
+    field = Field(images[0])
 
     Music.playNextMusic()
+
+    # Откуда и куда будет двигаться фигура.
+    moveFrom = None
+    moveTo = None
+
+    # В начале ходят белые.
+    isWhiteMove = True
+    isBlackMove = False
 
     exit = False
     while not exit:
@@ -40,7 +48,8 @@ def main():
 
         for event in pygame.event.get():
 
-            # Проверка закрытия окна.
+
+            # Если пользователь клинкул мышкой.
             if event.type == pygame.MOUSEBUTTONUP:
 
                 try:
@@ -48,10 +57,52 @@ def main():
                     if pygame.mouse.get_pos() is not None:
                         cell = field.findCell(mouceCoordinates)
 
+                        if moveFrom is None:
+
+                            try:
+                                # Могут ходить только те фигуры, чей сейчас ход!
+                                if isWhiteMove and cell.getPiece().getTeam() == "white":
+                                    moveFrom = (cell.getRow(), cell.getColumn())
+                                elif isBlackMove and cell.getPiece().getTeam() == "black":
+                                    moveFrom = (cell.getRow(), cell.getColumn())
+
+                            except CellDontContainsPiece:
+                                pass
+
+                        else:
+
+                            # Нельзя есть своих!
+                            try:
+
+                                if isWhiteMove and cell.getPiece().getTeam() != "white":
+                                    moveTo = (cell.getRow(), cell.getColumn())
+                                elif isBlackMove and cell.getPiece().getTeam() != "black":
+                                    moveTo = (cell.getRow(), cell.getColumn())
+
+                            # Если клетка не содержит фигуру.
+                            except CellDontContainsPiece:
+                                moveTo = (cell.getRow(), cell.getColumn())
+
+                        if moveFrom is not None and moveTo is not None:
+                            if field.moveFigure(moveFrom, moveTo):
+
+                                # Передаем ход следующей команде.
+                                isWhiteMove = not isWhiteMove
+                                isBlackMove = not isBlackMove
+                                moveFrom = None
+                                moveTo = None
+
+                            else:
+
+                                # Если переместить фигуру не удалось, то заставляем игрока ходить по-другому.
+                                moveFrom = None
+                                moveTo = None
+
                 except CannotFindThisCell:
                     pass
 
 
+            # Проверка закрытия окна.
             elif event.type == pygame.QUIT:
                 exit = True
 
