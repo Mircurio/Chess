@@ -3,6 +3,7 @@ import random
 from music import Music
 from figures import *
 from Field import *
+from Images import *
 
 def main():
 
@@ -22,10 +23,12 @@ def main():
     MUSIC_END = pygame.USEREVENT + 1
     pygame.mixer.music.set_endevent(MUSIC_END)
 
-    imagesFolder = 'Images'
-    images = [imagesFolder + '\Field.png']
+    # Хранит имя команды, поставившей мат. В начале игры - None
+    winner = None
 
-    field = Field(images[0])
+    imagesLibrary = ImagesLibrary()
+
+    field = Field()
 
     Music.playNextMusic()
 
@@ -42,15 +45,14 @@ def main():
         clock.tick(FPS)
 
         screen.fill((0, 0, 255))
-        screen.blit(field.getImage(), (100, 0))
+        imagesLibrary.blitField(screen, (100, 0))
 
         field.blitAllPieces(screen)
 
         for event in pygame.event.get():
 
-
             # Если пользователь клинкул мышкой.
-            if event.type == pygame.MOUSEBUTTONUP:
+            if event.type == pygame.MOUSEBUTTONUP and winner is None:
 
                 try:
                     mouceCoordinates = pygame.mouse.get_pos()
@@ -62,9 +64,9 @@ def main():
                             try:
                                 # Могут ходить только те фигуры, чей сейчас ход!
                                 if isWhiteMove and cell.getPiece().getTeam() == "white":
-                                    moveFrom = (cell.getRow(), cell.getColumn())
+                                    moveFrom = cell
                                 elif isBlackMove and cell.getPiece().getTeam() == "black":
-                                    moveFrom = (cell.getRow(), cell.getColumn())
+                                    moveFrom = cell
 
                             except CellDontContainsPiece:
                                 pass
@@ -75,13 +77,13 @@ def main():
                             try:
 
                                 if isWhiteMove and cell.getPiece().getTeam() != "white":
-                                    moveTo = (cell.getRow(), cell.getColumn())
+                                    moveTo = cell
                                 elif isBlackMove and cell.getPiece().getTeam() != "black":
-                                    moveTo = (cell.getRow(), cell.getColumn())
+                                    moveTo = cell
 
                             # Если клетка не содержит фигуру.
                             except CellDontContainsPiece:
-                                moveTo = (cell.getRow(), cell.getColumn())
+                                moveTo = cell
 
                         if moveFrom is not None and moveTo is not None:
                             if field.moveFigure(moveFrom, moveTo):
@@ -101,6 +103,7 @@ def main():
                 except CannotFindThisCell:
                     pass
 
+                winner = field.getWinnerOrNone()
 
             # Проверка закрытия окна.
             elif event.type == pygame.QUIT:
@@ -109,6 +112,17 @@ def main():
             # Если музыка закончилась, то включаем следующую.
             elif event.type == MUSIC_END:
                 Music.playNextMusic()
+
+        if isWhiteMove:
+            imagesLibrary.blitWhiteMove(screen, (1000, 50))
+        elif isBlackMove:
+            imagesLibrary.blitBlackMove(screen, (1000, 50))
+
+        if winner is not None:
+            if winner == "white":
+                imagesLibrary.blitWhiteTeamWins(screen, (1000, 430))
+            elif winner == "black":
+                imagesLibrary.blitBlackTeamWins(screen, (1000, 430))
 
         pygame.display.flip()
 

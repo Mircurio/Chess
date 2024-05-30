@@ -1,3 +1,5 @@
+import copy
+
 import  pygame
 from figures import *
 
@@ -9,6 +11,11 @@ class CellDontContainsPiece(Exception):
 class CannotFindThisCell(Exception):
 
     def __init__(self, message = "Can't find this cell!"):
+        super().__init__(message)
+
+class WrongTeam(Exception):
+
+    def __init__(self, message = "Wrong team!"):
         super().__init__(message)
 
 class Cell:
@@ -63,17 +70,16 @@ class Cell:
 
 class Field:
 
-    def __init__(self, filename):
+    __fieldSize = 8
+
+    def __init__(self):
         self.__cells = []
 
         # Рвзмер поля в длину и ширину (В клетках).
-        fieldSize = 8
 
         #Заполнение пустыми списками.
-        for i in range(fieldSize):
+        for i in range(self.__fieldSize):
             self.__cells.append(list())
-
-        self.__image = pygame.image.load(filename).convert_alpha()
 
         # Координаты левой верхней клетки.
         firstCellX1 = 180
@@ -83,10 +89,10 @@ class Field:
 
         deltaX = firstCellx2 - firstCellX1
         deltaY = firstCellY2 - firstCellY1
-        for rowNumber in range(fieldSize):
+        for rowNumber in range(self.__fieldSize):
 
 
-            for columnNumber in range(fieldSize):
+            for columnNumber in range(self.__fieldSize):
                 self.__cells[rowNumber].append(
                      Cell(firstCellX1 + deltaX * columnNumber, firstCellY1 + deltaY * rowNumber,
                            firstCellx2 + deltaX * columnNumber, firstCellY2 + deltaY * rowNumber, rowNumber, columnNumber))
@@ -128,28 +134,94 @@ class Field:
 
         return self.__cells[row][column]
 
-    def getImage(self):
-        return self.__image
-
     def addPiece(self, cellRowIndex, cellColumnIndex, piece: ChessPiece):
         self.__cells[cellRowIndex][cellColumnIndex].setPiece(piece)
 
     def getPiece(self, cellRowIndex, cellColumnIndex):
         return  self.__cells[cellRowIndex][cellColumnIndex].getPiece()
 
-    def moveFigure(self, moveFrom, moveTo):
-        '''Двигает фигуры на доске, если это правомерно. Возвращает в слечае успеха True, иначе - False.'''
+    def getFieldSize(self):
+        return self.__fieldSize
 
-        # Индексы ячеек.
-        row1, column1 = moveFrom
-        row2, column2 = moveTo
+    def moveFigure(self, moveFrom, moveTo, returnBack = False):
+        '''
+        Двигает фигуры на доске, если это правомерно. Возвращает в слечае успеха True, иначе - False.
+        Необязательный параметр returnBack возвращает фигуры обратно, если равен True (по умолчанию False).
+        '''
 
-        if self.getPiece(row1, column1).canMove(self, self.getCell(row1, column1), self.getCell(row2, column2)):
-            self.getCell(row2, column2).setPiece(self.getPiece(row1, column1))
-            self.getCell(row1, column1).delPiece()
+        if moveFrom.getPiece().canMove(self, moveFrom, moveTo):
+
+            moveFromPiece = moveFrom.getPiece()
+
+            moveToIsEmpty = False
+
+            try:
+                moveToPiece = moveTo.getPiece()
+            except CellDontContainsPiece:
+                moveToPiece = None
+                moveToIsEmpty = True
+
+            moveTo.setPiece(moveFrom.getPiece())
+
+            moveFrom.delPiece()
+            team = moveFromPiece.getTeam()
+
+            kingCell = self.findKingCell(team)
+
+            if kingCell.getPiece().isUnderAttack(self, kingCell):
+
+                moveFrom.setPiece(moveFromPiece)
+
+                if not moveToIsEmpty:
+                    moveTo.setPiece(moveToPiece)
+                else:
+                    moveTo.delPiece()
+
+                return False
+
+            if returnBack:
+                moveFrom.setPiece(moveFromPiece)
+
+                if not moveToIsEmpty:
+                    moveTo.setPiece(moveToPiece)
+                else:
+                    moveTo.delPiece()
+
             return True
 
         return False
+
+    def getWinnerOrNone(self):
+        '''Возвращает победившую команду(строку) или None, если таковой нет.'''
+
+        whiteKingCell = self.findKingCell("white")
+        blackKingCell = self.findKingCell("black")
+
+        if whiteKingCell.getPiece().isCheckmated(self, whiteKingCell):
+            return "black"
+        elif blackKingCell.getPiece().isCheckmated(self, blackKingCell):
+            return "white"
+        else:
+            return None
+
+
+    def findKingCell(self, team: str):
+        '''Возвращает клетку, в которой находится король. Короля нельзя съесть, поэтому он всегда будет на поле.'''
+
+        if team != "white" and team != "black":
+            raise WrongTeam()
+
+        for row in range(self.__fieldSize):
+            for column in range(self.__fieldSize):
+
+                try:
+
+                    piece = self.getPiece(row, column)
+                    if type(piece) == King and piece.getTeam() == team:
+                        return self.getCell(row, column)
+
+                except CellDontContainsPiece:
+                    pass
 
 
     def findCell(self, coordinates):

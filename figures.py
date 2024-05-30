@@ -244,6 +244,67 @@ class King(ChessPiece):
     def __init__(self, filename, team, x = None, y = None):
         super().__init__(filename, team, x, y)
 
+    def isUnderAttack(self, field, kingCell):
+        '''Атакован ли король?'''
+
+        fieldSize = field.getFieldSize()
+
+        for row in range(fieldSize):
+            for column in range(fieldSize):
+                try:
+                    cell = field.getCell(row, column)
+
+                    if cell.getPiece().getTeam() != self._team and cell.getPiece().canMove(field, cell, kingCell):
+                        return True
+                except:
+                    pass
+
+        return False
+
+
+    def isCheckmated(self, field, kingCell):
+        '''Возвращает True, если королю поставлен мат, иначе - False.'''
+
+        if self.isUnderAttack(field, kingCell):
+            deltaCells = ((-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1))
+
+            for deltaCell in deltaCells:
+
+                try:
+                    nearCell = field.getCell(kingCell.getRow() + deltaCell[0], kingCell.getColumn() + deltaCell[1])
+
+                    if nearCell.isEmpty() :
+                        # Если на соседней клетке король не атакован - значит это не мат.
+                        if not self.isUnderAttack(field, nearCell):
+                            return False
+                except:
+                    pass
+
+            # Если король не может уйти от шаха, то проверяем, может ли другая фигура закрыть его.
+            fieldSize = field.getFieldSize()
+
+            for row in range(fieldSize):
+                for column in range(fieldSize):
+
+                    moveFrom = field.getCell(row, column)
+
+                    for row2 in range(fieldSize):
+                        for column2 in range(fieldSize):
+                            moveTo = field.getCell(row2, column2)
+
+                            try:
+                                if moveFrom.getPiece().getTeam() == self._team and (moveTo.isEmpty() or moveTo.getPiece().getTeam != self._team)\
+                                        and field.moveFigure(moveFrom, moveTo, returnBack = True):
+
+                                    return False
+
+                            except:
+                                pass
+
+
+            return True
+
+
     def canMove(self, field, moveFrom, moveTo):
 
         directions = ((-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1))
@@ -251,9 +312,9 @@ class King(ChessPiece):
         for direction in directions:
             try:
                 destination = field.getCell(moveFrom.getRow() + direction[0], moveFrom.getColumn() + direction[1])
-                if destination is moveTo:
+                if destination is moveTo and destination.getPiece().getTeam() != self._team:
                     return True
-            except IndexError:
+            except:
                 pass
 
         return False
