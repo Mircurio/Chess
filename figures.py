@@ -312,8 +312,13 @@ class King(ChessPiece):
         for direction in directions:
             try:
                 destination = field.getCell(moveFrom.getRow() + direction[0], moveFrom.getColumn() + direction[1])
-                if destination is moveTo and destination.getPiece().getTeam() != self._team:
-                    return True
+
+                if destination is moveTo:
+                    if destination.isEmpty():
+                        return True
+                    elif (destination.getPiece().getTeam() != self._team):
+                        return True
+
             except:
                 pass
 
